@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ club.name }} — CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 720px;">
+  
+  <div style="margin-bottom: 1.5rem;">
+    <a href="{{ url_for('club_leader.dashboard') }}" style="font-weight: 600; color: var(--slate-600);">
+      &larr; Back to Leader Hub
+    </a>
+  </div>
+
+  <div class="card" style="padding: 2rem;">
+    <div style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--slate-100); padding-bottom: 1rem;">
+      <h2 style="font-size: 1.75rem;">Edit Society: {{ club.name }}</h2>
+      <p style="color: var(--slate-500); font-size: 0.9rem;">Update club profile, description, faculty advisor, and official logo</p>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" action="{{ url_for('club_leader.edit_club', club_id=club.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="form-group">
+        <label class="form-label">Society Name</label>
+        <input type="text" class="form-control" value="{{ club.name }}" disabled style="background: var(--slate-100); cursor: not-allowed;">
+        <span style="font-size: 0.75rem; color: var(--slate-400);">Official club names can only be renamed by campus administration.</span>
+      </div>
+
+      <div class="form-group">
+        <label for="category" class="form-label">Category</label>
+        <select id="category" name="category" class="form-control">
+          {% for cat in categories %}
+            <option value="{{ cat }}" {% if club.category == cat %}selected{% endif %}>{{ cat }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="faculty_coordinator" class="form-label">Faculty Coordinator / Advisor</label>
+        <input type="text" id="faculty_coordinator" name="faculty_coordinator" class="form-control" value="{{ club.faculty_coordinator }}" required>
+      </div>
+
+      <div class="form-group">
+        <label for="description" class="form-label">Club Mission & Description</label>
+        <textarea id="description" name="description" class="form-control" rows="5" required>{{ club.description }}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="logo_file" class="form-label">Update Club Logo (PNG, JPG, WEBP - Uploads to Azure Blob / local storage)</label>
+        <input type="file" id="logo_file" name="logo_file" class="form-control" accept="image/*">
+        {% if club.logo_url %}
+          <div style="margin-top: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 0.8rem; color: var(--slate-500);">Current Logo:</span>
+            <img src="{{ club.logo_url }}" alt="Logo" style="width: 2rem; height: 2rem; border-radius: var(--radius-full); object-fit: cover;">
+          </div>
+        {% endif %}
+      </div>
+
+      <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+        <button type="submit" class="btn btn-primary">
+          <i class="fa-solid fa-floppy-disk"></i> Save Club Details
+        </button>
+        <a href="{{ url_for('club_leader.dashboard') }}" class="btn btn-secondary">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Security Audit Logs — CampusConnect Administration{% endblock %}
+
+{% block content %}
+<div class="container">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h1 style="font-size: 2rem;">Security & Operational Audit Logs</h1>
+      <p style="color: var(--slate-500);">Immutable historical record of critical logins, registrations, attendance scans, and role changes</p>
+    </div>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary btn-sm">
+      &larr; Back to Admin Panel
+    </a>
+  </div>
+
+  <!-- Filter Controls -->
+  <div class="card" style="margin-bottom: 1.5rem; padding: 1rem 1.25rem;">
+    <form method="GET" action="{{ url_for('admin.audit_logs') }}" style="display: flex; gap: 1rem; align-items: center;">
+      <div style="flex: 1; max-width: 320px;">
+        <select name="action" class="form-control" onchange="this.form.submit()">
+          <option value="">All Action Types ({{ logs | length }} showing)</option>
+          {% for act in actions %}
+            <option value="{{ act }}" {% if selected_action == act %}selected{% endif %}>{{ act }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% if selected_action %}
+        <a href="{{ url_for('admin.audit_logs') }}" class="btn btn-secondary btn-sm">Clear Filter</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Logs Table -->
+  <div class="card" style="padding: 0; overflow: hidden;">
+    <div class="table-responsive" style="border: none;">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Timestamp (UTC)</th>
+            <th>Action</th>
+            <th>Entity Type & ID</th>
+            <th>Initiator</th>
+            <th>IP Address</th>
+            <th>Operational Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+            <tr>
+              <td style="font-size: 0.8rem; color: var(--slate-500); white-space: nowrap;">
+                {{ log.timestamp | format_datetime }}
+              </td>
+              <td>
+                <span class="badge {% if 'LOGIN' in log.action %}badge-indigo{% elif 'ATTENDANCE' in log.action %}badge-success{% elif 'ROLE' in log.action or 'DELETE' in log.action %}badge-danger{% else %}badge-slate{% endif %}">
+                  {{ log.action }}
+                </span>
+              </td>
+              <td>
+                <strong>{{ log.entity_type }}</strong>
+                {% if log.entity_id %}
+                  <span style="font-size: 0.8rem; color: var(--slate-500);">(#{{ log.entity_id }})</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if log.user %}
+                  <strong>{{ log.user.name }}</strong>
+                  <div style="font-size: 0.75rem; color: var(--slate-400);">{{ log.user.role }}</div>
+                {% else %}
+                  <span style="color: var(--slate-400);">System / Anonymous</span>
+                {% endif %}
+              </td>
+              <td style="font-size: 0.8rem; color: var(--slate-500);"><code>{{ log.ip_address or '127.0.0.1' }}</code></td>
+              <td style="font-size: 0.85rem; color: var(--slate-700);">{{ log.details }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

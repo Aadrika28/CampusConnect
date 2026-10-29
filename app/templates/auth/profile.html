@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile — CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px;">
+  <div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2rem;">Student Profile & Settings</h1>
+    <p style="color: var(--slate-500);">Manage your personal details and account security credentials</p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem;">
+    <!-- Profile Card Summary -->
+    <div class="card" style="text-align: center; height: fit-content;">
+      <div style="width: 5rem; height: 5rem; background: var(--indigo-600); color: #fff; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 800; margin: 0 auto 1rem;">
+        {{ user.name[:1] }}
+      </div>
+      <h3 style="font-size: 1.25rem; margin-bottom: 0.25rem;">{{ user.name }}</h3>
+      <p style="color: var(--slate-500); font-size: 0.85rem; margin-bottom: 0.75rem;">{{ user.email }}</p>
+      
+      <div>
+        <span class="badge {% if user.is_admin %}badge-danger{% elif user.is_club_leader %}badge-indigo{% else %}badge-slate{% endif %}">
+          {{ user.role.replace('_', ' ') | title }}
+        </span>
+      </div>
+
+      <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--slate-100); text-align: left; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.5rem;">
+        <div><strong>Student ID:</strong> {{ user.student_id or 'N/A' }}</div>
+        <div><strong>Department:</strong> {{ user.department }}</div>
+        <div><strong>Batch:</strong> {{ user.batch_year }}</div>
+        <div><strong>Joined:</strong> {{ user.created_at | format_date }}</div>
+      </div>
+    </div>
+
+    <!-- Edit Forms -->
+    <div>
+      <!-- Update Details -->
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <h4 style="margin-bottom: 1rem;">Personal Information</h4>
+        <form method="POST" action="{{ url_for('auth.profile') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="update_profile">
+
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input type="text" name="name" class="form-control" value="{{ user.name }}" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Department / School</label>
+            <input type="text" name="department" class="form-control" value="{{ user.department }}">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Phone Number</label>
+            <input type="tel" name="phone" class="form-control" value="{{ user.phone or '' }}" placeholder="+1 (555) 000-0000">
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
+        </form>
+      </div>
+
+      <!-- Change Password -->
+      <div class="card">
+        <h4 style="margin-bottom: 1rem;">Change Password</h4>
+        <form method="POST" action="{{ url_for('auth.profile') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="change_password">
+
+          <div class="form-group">
+            <label class="form-label">Current Password</label>
+            <input type="password" name="current_password" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">New Password (min 6 chars)</label>
+            <input type="password" name="new_password" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Confirm New Password</label>
+            <input type="password" name="confirm_new_password" class="form-control" required>
+          </div>
+
+          <button type="submit" class="btn btn-secondary btn-sm">Update Password</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

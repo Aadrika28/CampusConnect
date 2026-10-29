@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Student Clubs & Societies — CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container">
+  
+  <div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">Student Clubs & Societies</h1>
+    <p style="color: var(--slate-500); font-size: 1.05rem;">Find your community, collaborate on innovative projects, and cultivate leadership skills</p>
+  </div>
+
+  <!-- Search & Category Filters -->
+  <div class="card" style="margin-bottom: 2.5rem; padding: 1.25rem;">
+    <form method="GET" action="{{ url_for('clubs.index') }}" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+      <div style="flex: 2; min-width: 250px;">
+        <input type="text" name="q" class="form-control" placeholder="Search club name, coordinator, description..." value="{{ search_query }}">
+      </div>
+      <div style="flex: 1; min-width: 180px;">
+        <select name="category" class="form-control">
+          <option value="">All Categories</option>
+          {% for cat in categories %}
+            <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <button type="submit" class="btn btn-primary" style="padding: 0.7rem 1.25rem;">
+          <i class="fa-solid fa-filter"></i> Filter
+        </button>
+        {% if search_query or selected_category %}
+          <a href="{{ url_for('clubs.index') }}" class="btn btn-secondary" style="padding: 0.7rem;">Clear</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Clubs Grid -->
+  {% if clubs %}
+    <div class="clubs-grid">
+      {% for club in clubs %}
+        <div class="club-card">
+          <div class="club-avatar">
+            {% if club.logo_url %}
+              <img src="{{ club.logo_url }}" alt="{{ club.name }}">
+            {% else %}
+              {{ club.name[:2].upper() }}
+            {% endif %}
+          </div>
+
+          <h3 class="club-card-title">{{ club.name }}</h3>
+          <div class="club-card-category">
+            <span class="badge badge-indigo">{{ club.category }}</span>
+            {% if club.id in user_club_ids %}
+              <span class="badge badge-success"><i class="fa-solid fa-check"></i> Member</span>
+            {% endif %}
+          </div>
+
+          <p class="club-card-desc">{{ club.description }}</p>
+
+          <div style="font-size: 0.85rem; color: var(--slate-500); margin-bottom: 1.25rem; display: flex; flex-direction: column; gap: 0.25rem; width: 100%;">
+            <div><i class="fa-solid fa-user-tie" style="color: var(--slate-400);"></i> <strong>Coord:</strong> {{ club.faculty_coordinator }}</div>
+            <div><i class="fa-solid fa-users" style="color: var(--slate-400);"></i> <strong>Members:</strong> {{ club.member_count }} active students</div>
+            <div><i class="fa-solid fa-calendar-check" style="color: var(--slate-400);"></i> <strong>Upcoming Events:</strong> {{ club.active_events_count }}</div>
+          </div>
+
+          <a href="{{ url_for('clubs.detail', club_id=club.id) }}" class="btn btn-secondary btn-sm" style="width: 100%; margin-top: auto;">
+            Explore Club & Events
+          </a>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card" style="text-align: center; padding: 4rem;">
+      <i class="fa-solid fa-people-roof" style="font-size: 3rem; color: var(--slate-300); margin-bottom: 1rem;"></i>
+      <h3>No clubs found matching your search</h3>
+      <p style="color: var(--slate-500); margin-top: 0.5rem;">Try searching for different keywords or category filters.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

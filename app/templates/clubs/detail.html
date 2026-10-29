@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}{{ club.name }} — CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1040px;">
+  
+  <div style="margin-bottom: 1.25rem;">
+    <a href="{{ url_for('clubs.index') }}" style="font-size: 0.9rem; font-weight: 600; color: var(--slate-600);">
+      &larr; Back to Clubs Directory
+    </a>
+  </div>
+
+  <!-- Club Hero Card -->
+  <div class="card" style="margin-bottom: 2rem; border-radius: var(--radius-xl); padding: 2rem;">
+    <div style="display: flex; gap: 2rem; align-items: flex-start; flex-wrap: wrap;">
+      <div class="club-avatar" style="width: 6rem; height: 6rem; font-size: 2.25rem; flex-shrink: 0;">
+        {% if club.logo_url %}
+          <img src="{{ club.logo_url }}" alt="{{ club.name }}">
+        {% else %}
+          {{ club.name[:2].upper() }}
+        {% endif %}
+      </div>
+
+      <div style="flex: 1; min-width: 280px;">
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
+          <span class="badge badge-indigo">{{ club.category }}</span>
+          {% if is_member %}
+            <span class="badge badge-success"><i class="fa-solid fa-check"></i> Member</span>
+          {% endif %}
+        </div>
+
+        <h1 style="font-size: 2.25rem; margin-bottom: 0.5rem;">{{ club.name }}</h1>
+        <p style="color: var(--slate-600); font-size: 1.05rem; line-height: 1.6; margin-bottom: 1.25rem;">
+          {{ club.description }}
+        </p>
+
+        <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.9rem; color: var(--slate-600);">
+          <div><i class="fa-solid fa-user-tie" style="color: var(--indigo-600);"></i> <strong>Faculty Coordinator:</strong> {{ club.faculty_coordinator }}</div>
+          <div><i class="fa-solid fa-user-astronaut" style="color: var(--blue-600);"></i> <strong>Student Leader:</strong> {{ club.leader.name if club.leader else 'Unassigned' }}</div>
+          <div><i class="fa-solid fa-users" style="color: var(--emerald-600);"></i> <strong>Active Members:</strong> {{ club.member_count }}</div>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <div style="align-self: center;">
+        {% if not current_user %}
+          <a href="{{ url_for('auth.login', next=request.path) }}" class="btn btn-primary">
+            Sign In to Join
+          </a>
+        {% elif is_member %}
+          <form method="POST" action="{{ url_for('clubs.leave', club_id=club.id) }}" onsubmit="return confirm('Leave {{ club.name }}?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-secondary" style="color: var(--rose-600);">
+              <i class="fa-solid fa-user-minus"></i> Leave Club
+            </button>
+          </form>
+        {% else %}
+          <form method="POST" action="{{ url_for('clubs.join', club_id=club.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="fa-solid fa-user-plus"></i> Join This Club
+            </button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Club Content Tabs & Grids -->
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+    <!-- Upcoming & Past Events -->
+    <div>
+      <div class="card" style="margin-bottom: 2rem;">
+        <h3 style="margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+          <i class="fa-regular fa-calendar-days" style="color: var(--indigo-600);"></i> Upcoming Club Events
+        </h3>
+
+        {% if upcoming_events %}
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            {% for event in upcoming_events %}
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: var(--radius-md); flex-wrap: wrap; gap: 1rem;">
+                <div>
+                  <span class="badge badge-indigo" style="font-size: 0.7rem; margin-bottom: 0.2rem;">{{ event.category }}</span>
+                  <h4 style="font-size: 1.05rem; margin: 0.2rem 0;"><a href="{{ url_for('events.detail', event_id=event.id) }}">{{ event.title }}</a></h4>
+                  <div style="font-size: 0.8rem; color: var(--slate-500);">
+                    {{ event.event_date | format_datetime }} &bull; {{ event.venue }} &bull; {{ event.available_seats }} seats left
+                  </div>
+                </div>
+                <a href="{{ url_for('events.detail', event_id=event.id) }}" class="btn btn-primary btn-sm">
+                  Register
+                </a>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p style="color: var(--slate-500); font-size: 0.9rem; text-align: center; padding: 2rem;">
+            No upcoming events scheduled right now. Stay tuned!
+          </p>
+        {% endif %}
+      </div>
+
+      <!-- Past Events -->
+      {% if past_events %}
+        <div class="card">
+          <h3 style="margin-bottom: 1rem; color: var(--slate-700); font-size: 1.2rem;">
+            Past Activities
+          </h3>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            {% for event in past_events %}
+              <div style="display: flex; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px solid var(--slate-100); font-size: 0.9rem;">
+                <span style="font-weight: 600; color: var(--slate-800);">{{ event.title }}</span>
+                <span style="color: var(--slate-400); font-size: 0.8rem;">{{ event.event_date | format_date }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Right: Club Announcements -->
+    <div>
+      <div class="card">
+        <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; font-size: 1.25rem;">
+          <i class="fa-solid fa-bullhorn" style="color: var(--amber-500);"></i> Club Notices
+        </h3>
+
+        {% if announcements %}
+          <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+            {% for ann in announcements %}
+              <div style="padding: 0.85rem; background: var(--slate-50); border-radius: var(--radius-md); border-left: 3px solid var(--amber-500);">
+                <strong style="font-size: 0.9rem; color: var(--slate-900); display: block; margin-bottom: 0.2rem;">{{ ann.title }}</strong>
+                <p style="font-size: 0.85rem; color: var(--slate-600); margin-bottom: 0.4rem; line-height: 1.4;">{{ ann.content }}</p>
+                <div style="font-size: 0.75rem; color: var(--slate-400);">{{ ann.created_at | format_datetime }}</div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p style="color: var(--slate-400); font-size: 0.85rem; text-align: center; padding: 1.5rem;">
+            No announcements posted yet.
+          </p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

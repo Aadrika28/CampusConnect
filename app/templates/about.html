@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}About CampusConnect — Technical Architecture & Cloud Design{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 960px;">
+  <div style="margin-bottom: 2.5rem; text-align: center;">
+    <div style="display: inline-block; padding: 0.35rem 0.9rem; background: var(--indigo-50); border: 1px solid var(--indigo-200); border-radius: var(--radius-full); color: var(--indigo-700); font-size: 0.8rem; font-weight: 700; margin-bottom: 1rem; text-transform: uppercase;">
+      Platform Architecture
+    </div>
+    <h1 style="font-size: 2.5rem; margin-bottom: 0.75rem;">About CampusConnect</h1>
+    <p style="font-size: 1.1rem; color: var(--slate-600); max-width: 650px; margin: 0 auto;">
+      A comprehensive full-stack enterprise web application engineered to modernize student life, event coordination, and campus club governance.
+    </p>
+  </div>
+
+  <div class="card" style="margin-bottom: 2rem;">
+    <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+      <i class="fa-solid fa-layer-group" style="color: var(--indigo-600);"></i> Core Technology Stack
+    </h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+      <div style="padding: 1rem; background: var(--slate-50); border-radius: var(--radius-md);">
+        <strong style="color: var(--indigo-700);">Backend Architecture</strong>
+        <p style="font-size: 0.85rem; color: var(--slate-600); margin-top: 0.4rem;">
+          Python 3.14+, Flask framework, Flask-SQLAlchemy, Werkzeug secure password hashing, WTForms CSRF token protection, and ItsDangerous cryptographic signing.
+        </p>
+      </div>
+
+      <div style="padding: 1rem; background: var(--slate-50); border-radius: var(--radius-md);">
+        <strong style="color: var(--blue-600);">Database Layer</strong>
+        <p style="font-size: 0.85rem; color: var(--slate-600); margin-top: 0.4rem;">
+          Azure SQL Database (production) with SQLAlchemy ORM and local SQLite fallback for offline demonstrations and CI/CD testing.
+        </p>
+      </div>
+
+      <div style="padding: 1rem; background: var(--slate-50); border-radius: var(--radius-md);">
+        <strong style="color: var(--emerald-600);">Storage & Cloud</strong>
+        <p style="font-size: 0.85rem; color: var(--slate-600); margin-top: 0.4rem;">
+          Azure Blob Storage for scalable event banner uploads, with automatic local filesystem fallback for development.
+        </p>
+      </div>
+
+      <div style="padding: 1rem; background: var(--slate-50); border-radius: var(--radius-md);">
+        <strong style="color: var(--amber-600);">Analytics & BI</strong>
+        <p style="font-size: 0.85rem; color: var(--slate-600); margin-top: 0.4rem;">
+          Interactive in-app Chart.js dashboards, prepared Azure SQL views, and Power BI direct query / CSV data pipeline.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR Verification & Security Architecture -->
+  <div class="card" style="margin-bottom: 2rem;">
+    <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+      <i class="fa-solid fa-shield-check" style="color: var(--emerald-600);"></i> Cryptographic Attendance Verification
+    </h3>
+    <p style="color: var(--slate-600); font-size: 0.95rem; line-height: 1.6; margin-bottom: 1rem;">
+      To prevent fraudulent or spoofed attendance check-ins, CampusConnect avoids placing raw, predictable URLs or unencrypted IDs inside QR passes:
+    </p>
+    <ul style="padding-left: 1.25rem; color: var(--slate-700); font-size: 0.9rem; line-height: 1.7;">
+      <li><strong>HMAC-SHA256 Token Signing:</strong> Each student registration pass is generated using an encrypted, time-stamped signature containing the registration ID, event ID, and user identity.</li>
+      <li><strong>Server-Side Verification:</strong> When the QR code is scanned via the organizer's camera, the payload is verified on the backend. Client-side scans are never trusted autonomously.</li>
+      <li><strong>Event-Scope Enforcement:</strong> Passes scanned for Event A are immediately rejected if presented at Event B.</li>
+      <li><strong>Duplicate Prevention:</strong> Once verified, attendance is locked in the relational database with unique constraints. Repeated scans within the same session trigger clear duplicate notifications with timestamp evidence.</li>
+      <li><strong>Manual Fallback:</strong> In case student phone screens are broken or camera permissions are restricted, organizers can manually enter registration codes.</li>
+    </ul>
+  </div>
+
+  <!-- Demo Accounts Reference -->
+  <div class="card" style="background: linear-gradient(135deg, #1e1b4b, #312e81); color: #fff; border: none;">
+    <h3 style="color: #fff; margin-bottom: 1rem;">Demo User Accounts</h3>
+    <p style="font-size: 0.95rem; color: #c7d2fe; margin-bottom: 1.5rem;">
+      The platform comes pre-seeded with test accounts for each role so instructors and evaluators can explore every feature immediately:
+    </p>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+      <div style="background: rgba(255, 255, 255, 0.1); padding: 1rem; border-radius: var(--radius-md); backdrop-filter: blur(8px);">
+        <div style="font-weight: 700; font-size: 1rem; color: #38bdf8;">Administrator</div>
+        <div style="font-size: 0.85rem; margin-top: 0.3rem;"><strong>Email:</strong> admin@campus.edu</div>
+        <div style="font-size: 0.85rem;"><strong>Password:</strong> Campus@2025</div>
+        <div style="font-size: 0.75rem; color: #a5b4fc; margin-top: 0.4rem;">Full system access, user management, audit logs.</div>
+      </div>
+
+      <div style="background: rgba(255, 255, 255, 0.1); padding: 1rem; border-radius: var(--radius-md); backdrop-filter: blur(8px);">
+        <div style="font-weight: 700; font-size: 1rem; color: #a7f3d0;">Club Leader</div>
+        <div style="font-size: 0.85rem; margin-top: 0.3rem;"><strong>Email:</strong> leader@campus.edu</div>
+        <div style="font-size: 0.85rem;"><strong>Password:</strong> Campus@2025</div>
+        <div style="font-size: 0.75rem; color: #a5b4fc; margin-top: 0.4rem;">Manages Tech & Coding Club, event creation, QR scanner.</div>
+      </div>
+
+      <div style="background: rgba(255, 255, 255, 0.1); padding: 1rem; border-radius: var(--radius-md); backdrop-filter: blur(8px);">
+        <div style="font-weight: 700; font-size: 1rem; color: #fde68a;">Student</div>
+        <div style="font-size: 0.85rem; margin-top: 0.3rem;"><strong>Email:</strong> student@campus.edu</div>
+        <div style="font-size: 0.85rem;"><strong>Password:</strong> Campus@2025</div>
+        <div style="font-size: 0.75rem; color: #a5b4fc; margin-top: 0.4rem;">Browse events, registers for hackathons, QR pass holder.</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}{% if event %}Edit: {{ event.title }}{% else %}Create Campus Event{% endif %} — CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 840px;">
+  
+  <div style="margin-bottom: 1.5rem;">
+    <a href="{{ url_for('club_leader.dashboard') }}" style="font-weight: 600; color: var(--slate-600);">
+      &larr; Back to Leader Hub
+    </a>
+  </div>
+
+  <div class="card" style="padding: 2.25rem;">
+    <div style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--slate-100); padding-bottom: 1rem;">
+      <h2 style="font-size: 1.85rem;">{% if event %}Edit Event: {{ event.title }}{% else %}Publish New Campus Event{% endif %}</h2>
+      <p style="color: var(--slate-500); font-size: 0.95rem;">Configure event venue, scheduling, transactional capacity limits, and banner media</p>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" action="{% if event %}{{ url_for('club_leader.edit_event', event_id=event.id) }}{% else %}{{ url_for('club_leader.create_event') }}{% endif %}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <!-- Club Selector (If creating) -->
+      {% if not event %}
+        <div class="form-group">
+          <label for="club_id" class="form-label">Organizing Society *</label>
+          <select id="club_id" name="club_id" class="form-control" required>
+            {% for c in managed_clubs %}
+              <option value="{{ c.id }}">{{ c.name }} ({{ c.category }})</option>
+            {% endfor %}
+          </select>
+        </div>
+      {% endif %}
+
+      <div class="form-group">
+        <label for="title" class="form-label">Event Title *</label>
+        <input type="text" id="title" name="title" class="form-control" placeholder="e.g. HackCon 2025: 24-Hour National Hackathon" value="{{ event.title if event else '' }}" required>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="category" class="form-label">Category *</label>
+          <select id="category" name="category" class="form-control" required>
+            {% for cat in categories %}
+              <option value="{{ cat }}" {% if event and event.category == cat %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="venue" class="form-label">Venue Location *</label>
+          <input type="text" id="venue" name="venue" class="form-control" placeholder="Auditorium Hall B / Lab 3" value="{{ event.venue if event else '' }}" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="description" class="form-label">Detailed Description & Agenda *</label>
+        <textarea id="description" name="description" class="form-control" rows="5" placeholder="Outline event rules, prerequisites, schedule, prizes, and key speakers..." required>{{ event.description if event else '' }}</textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="event_date" class="form-label">Event Start Date & Time *</label>
+          <input type="datetime-local" id="event_date" name="event_date" class="form-control" value="{{ event.event_date.strftime('%Y-%m-%dT%H:%M') if event else '' }}" required>
+        </div>
+
+        <div class="form-group">
+          <label for="end_date" class="form-label">Event End Date & Time (Optional)</label>
+          <input type="datetime-local" id="end_date" name="end_date" class="form-control" value="{{ event.end_date.strftime('%Y-%m-%dT%H:%M') if event and event.end_date else '' }}">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="registration_deadline" class="form-label">Registration Deadline *</label>
+          <input type="datetime-local" id="registration_deadline" name="registration_deadline" class="form-control" value="{{ event.registration_deadline.strftime('%Y-%m-%dT%H:%M') if event else '' }}" required>
+        </div>
+
+        <div class="form-group">
+          <label for="max_capacity" class="form-label">Maximum Attendee Capacity *</label>
+          <input type="number" id="max_capacity" name="max_capacity" class="form-control" min="1" max="5000" value="{{ event.max_capacity if event else '100' }}" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="banner_file" class="form-label">Event Banner Image (PNG, JPG, WEBP - Azure Blob / Local)</label>
+          <input type="file" id="banner_file" name="banner_file" class="form-control" accept="image/*">
+          {% if event and event.banner_url %}
+            <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--slate-500);">
+              Current banner: <a href="{{ event.banner_url }}" target="_blank">View existing image</a>
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="status" class="form-label">Publication Status</label>
+          <select id="status" name="status" class="form-control">
+            <option value="published" {% if not event or event.status == 'published' %}selected{% endif %}>Published (Open for viewing/registering)</option>
+            <option value="draft" {% if event and event.status == 'draft' %}selected{% endif %}>Draft (Hidden from student catalog)</option>
+            {% if event %}
+              <option value="cancelled" {% if event.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+              <option value="completed" {% if event.status == 'completed' %}selected{% endif %}>Completed</option>
+            {% endif %}
+          </select>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+        <button type="submit" class="btn btn-primary btn-lg">
+          <i class="fa-solid fa-cloud-arrow-up"></i> {% if event %}Update Event{% else %}Publish Event{% endif %}
+        </button>
+        <a href="{{ url_for('club_leader.dashboard') }}" class="btn btn-secondary btn-lg">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

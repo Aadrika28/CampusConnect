@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}QR Attendance Scanner — CampusConnect{% endblock %}
+
+{% block extra_head %}
+<!-- HTML5 QR Code scanning library -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px;">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <div style="font-size: 0.85rem; font-weight: 700; color: var(--indigo-600); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem;">
+        Fast Venue Check-in
+      </div>
+      <h1 style="font-size: 2.25rem;">QR Attendance Scanner</h1>
+      <p style="color: var(--slate-500);">Live camera scanning with server-side HMAC token verification</p>
+    </div>
+
+    <a href="{{ url_for('club_leader.dashboard') }}" class="btn btn-secondary btn-sm">
+      &larr; Back to Dashboard
+    </a>
+  </div>
+
+  <!-- Event Selector Card -->
+  <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
+    <label for="scannerEventSelect" class="form-label">Select Active Event to Scan For:</label>
+    <select id="scannerEventSelect" class="form-control" style="font-weight: 600; font-size: 1rem;">
+      {% for ev in events %}
+        <option value="{{ ev.id }}" {% if ev.id == selected_event_id %}selected{% endif %}>
+          {{ ev.title }} ({{ ev.event_date | format_date }}) &bull; {{ ev.club.name }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+    
+    <!-- Left Column: Camera Scanner Viewport -->
+    <div class="card" style="text-align: center;">
+      <h3 style="font-size: 1.2rem; margin-bottom: 1rem;">
+        <i class="fa-solid fa-camera" style="color: var(--indigo-600);"></i> Camera Viewfinder
+      </h3>
+
+      <!-- QR Video Container -->
+      <div id="qr-reader" style="width: 100%; min-height: 280px; background: var(--slate-100); border-radius: var(--radius-md); overflow: hidden; border: 2px dashed var(--slate-300); margin-bottom: 1rem;"></div>
+
+      <div style="display: flex; justify-content: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+        <button id="startScanBtn" class="btn btn-primary">
+          <i class="fa-solid fa-play"></i> Start Camera
+        </button>
+        <button id="stopScanBtn" class="btn btn-secondary" style="display: none;">
+          <i class="fa-solid fa-pause"></i> Pause Camera
+        </button>
+      </div>
+
+      <p id="scannerStatusText" style="font-size: 0.85rem; color: var(--slate-500);">
+        Click "Start Camera" and point at attendee's digital pass.
+      </p>
+    </div>
+
+    <!-- Right Column: Verification Result & Manual Fallback -->
+    <div>
+      <!-- Live Scan Feedback Card -->
+      <div class="card" style="margin-bottom: 1.5rem; min-height: 180px;">
+        <h3 style="font-size: 1.15rem; margin-bottom: 0.75rem;">Validation Result</h3>
+        <div id="scanFeedback">
+          <div style="text-align: center; color: var(--slate-400); padding: 1.5rem 0;">
+            <i class="fa-solid fa-qrcode" style="font-size: 2.5rem; margin-bottom: 0.5rem;"></i>
+            <p>Scan a QR code or submit code manually below.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Manual Code Fallback Input -->
+      <div class="card">
+        <h4 style="font-size: 1rem; margin-bottom: 0.5rem; color: var(--slate-800);">
+          <i class="fa-solid fa-keyboard" style="color: var(--slate-500);"></i> Manual Registration Code Fallback
+        </h4>
+        <p style="font-size: 0.85rem; color: var(--slate-500); margin-bottom: 1rem;">
+          If the student has a broken screen or camera permissions are restricted, enter their Pass Code directly.
+        </p>
+
+        <form id="manualCheckinForm">
+          <div style="display: flex; gap: 0.5rem;">
+            <input type="text" id="manualCodeInput" class="form-control" placeholder="e.g. REG-A1B2C3D4E5F6" style="text-transform: uppercase;">
+            <button type="submit" class="btn btn-primary" style="flex-shrink: 0;">
+              Verify Code
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Scans Stream -->
+  <div class="card" style="margin-top: 2rem; padding: 0; overflow: hidden;">
+    <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--slate-200); background: var(--slate-50);">
+      <h3 style="font-size: 1.1rem; margin: 0;">Session Attendance Log</h3>
+    </div>
+    <div class="table-responsive" style="border: none;">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Student Name</th>
+            <th>Student ID</th>
+            <th>Status</th>
+            <th>Marked Time</th>
+            <th>Verification Method</th>
+          </tr>
+        </thead>
+        <tbody id="recentScansList">
+          <!-- Dynamically populated by qr_scanner.js -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/qr_scanner.js') }}"></script>
+{% endblock %}

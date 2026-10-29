@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}User Management — CampusConnect Administration{% endblock %}
+
+{% block content %}
+<div class="container">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h1 style="font-size: 2rem;">User & Role Management</h1>
+      <p style="color: var(--slate-500);">Manage permissions, student accounts, club leader promotions, and security access</p>
+    </div>
+    <div style="font-size: 0.85rem; background: var(--amber-50); border: 1px solid var(--amber-200); padding: 0.5rem 0.75rem; border-radius: var(--radius-md); color: var(--amber-800);">
+      <i class="fa-solid fa-shield"></i> <strong>{{ active_admins_count }}</strong> Active Administrator(s) configured. Lockout protection is active.
+    </div>
+  </div>
+
+  <!-- Search & Role Filter -->
+  <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
+    <form method="GET" action="{{ url_for('admin.users') }}" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+      <div style="flex: 2; min-width: 250px;">
+        <input type="text" name="q" class="form-control" placeholder="Search by user name, email, student ID, department..." value="{{ search_query }}">
+      </div>
+      <div style="flex: 1; min-width: 150px;">
+        <select name="role" class="form-control">
+          <option value="all" {% if role_filter == 'all' %}selected{% endif %}>All Roles</option>
+          <option value="student" {% if role_filter == 'student' %}selected{% endif %}>Students</option>
+          <option value="club_leader" {% if role_filter == 'club_leader' %}selected{% endif %}>Club Leaders</option>
+          <option value="admin" {% if role_filter == 'admin' %}selected{% endif %}>Administrators</option>
+        </select>
+      </div>
+      <div style="flex: 1; min-width: 150px;">
+        <select name="status" class="form-control">
+          <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Statuses</option>
+          <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active Only</option>
+          <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Deactivated Only</option>
+        </select>
+      </div>
+      <div>
+        <button type="submit" class="btn btn-primary" style="padding: 0.7rem 1.25rem;">Filter</button>
+        {% if search_query or role_filter != 'all' or status_filter != 'all' %}
+          <a href="{{ url_for('admin.users') }}" class="btn btn-secondary" style="padding: 0.7rem;">Clear</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Users Table -->
+  <div class="card" style="padding: 0; overflow: hidden;">
+    <div class="table-responsive" style="border: none;">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Student ID / Roll No</th>
+            <th>Department</th>
+            <th>Current Role</th>
+            <th>Status</th>
+            <th>Joined</th>
+            <th style="text-align: right;">Role & Account Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+            <tr>
+              <td>
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <div style="width: 2rem; height: 2rem; border-radius: var(--radius-full); background: var(--indigo-50); color: var(--indigo-600); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem;">
+                    {{ u.name[:1] }}
+                  </div>
+                  <div>
+                    <strong style="color: var(--slate-900);">{{ u.name }}</strong>
+                    <div style="font-size: 0.8rem; color: var(--slate-500);">{{ u.email }}</div>
+                  </div>
+                </div>
+              </td>
+              <td>{{ u.student_id or 'N/A' }}</td>
+              <td>{{ u.department }}</td>
+              <td>
+                <span class="badge {% if u.role == 'admin' %}badge-danger{% elif u.role == 'club_leader' %}badge-indigo{% else %}badge-slate{% endif %}">
+                  {{ u.role.replace('_', ' ') | title }}
+                </span>
+              </td>
+              <td>
+                {% if u.is_active %}
+                  <span class="badge badge-success">Active</span>
+                {% else %}
+                  <span class="badge badge-danger">Deactivated</span>
+                {% endif %}
+              </td>
+              <td style="font-size: 0.8rem; color: var(--slate-500);">{{ u.created_at | format_date }}</td>
+              <td style="text-align: right;">
+                <div style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                  <!-- Change Role Form -->
+                  <form method="POST" action="{{ url_for('admin.change_user_role', user_id=u.id) }}" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <select name="role" onchange="if(confirm('Change role for {{ u.name }} to ' + this.value + '?')) { this.form.submit(); } else { this.value='{{ u.role }}'; }" class="form-control" style="padding: 0.3rem 0.5rem; font-size: 0.8rem; width: auto; display: inline-block;">
+                      <option value="student" {% if u.role == 'student' %}selected{% endif %}>Student</option>
+                      <option value="club_leader" {% if u.role == 'club_leader' %}selected{% endif %}>Club Leader</option>
+                      <option value="admin" {% if u.role == 'admin' %}selected{% endif %}>Administrator</option>
+                    </select>
+                  </form>
+
+                  <!-- Toggle Status Button -->
+                  <form method="POST" action="{{ url_for('admin.toggle_user_status', user_id=u.id) }}" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    {% if u.is_active %}
+                      <button type="submit" class="btn btn-secondary btn-sm" style="color: var(--rose-600); font-size: 0.75rem; padding: 0.35rem 0.6rem;" onclick="return confirm('Deactivate account for {{ u.name }}?');" title="Deactivate user">
+                        Deactivate
+                      </button>
+                    {% else %}
+                      <button type="submit" class="btn btn-success btn-sm" style="font-size: 0.75rem; padding: 0.35rem 0.6rem;" title="Reactivate user">
+                        Activate
+                      </button>
+                    {% endif %}
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

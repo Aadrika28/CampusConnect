@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Participation Analytics & Power BI — CampusConnect{% endblock %}
+
+{% block extra_head %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  
+  <!-- Header -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <div style="font-size: 0.85rem; font-weight: 700; color: var(--indigo-600); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem;">
+        Institutional Intelligence
+      </div>
+      <h1 style="font-size: 2.25rem;">Campus Participation Analytics</h1>
+      <p style="color: var(--slate-500);">Real-time metrics, event performance indicators, and Power BI reporting pipeline</p>
+    </div>
+
+    <!-- CSV Export Quick Actions -->
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+      <a href="{{ url_for('analytics.export_registrations_csv') }}" class="btn btn-secondary btn-sm">
+        <i class="fa-solid fa-file-csv" style="color: var(--emerald-600);"></i> Registrations CSV
+      </a>
+      <a href="{{ url_for('analytics.export_attendance_csv') }}" class="btn btn-secondary btn-sm">
+        <i class="fa-solid fa-file-csv" style="color: var(--blue-600);"></i> Attendance CSV
+      </a>
+      <a href="{{ url_for('analytics.export_clubs_summary_csv') }}" class="btn btn-secondary btn-sm">
+        <i class="fa-solid fa-file-csv" style="color: var(--indigo-600);"></i> Clubs CSV
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI Overview Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon indigo"><i class="fa-solid fa-user-graduate"></i></div>
+      <div>
+        <div class="stat-number">{{ total_users }}</div>
+        <div class="stat-label">Student Participants</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="fa-regular fa-calendar-check"></i></div>
+      <div>
+        <div class="stat-number">{{ total_events }}</div>
+        <div class="stat-label">Total Events Analyzed</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon emerald"><i class="fa-solid fa-ticket"></i></div>
+      <div>
+        <div class="stat-number">{{ total_registrations }}</div>
+        <div class="stat-label">Total Registrations</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon amber"><i class="fa-solid fa-clipboard-user"></i></div>
+      <div>
+        <div class="stat-number">{{ overall_attendance_rate }}%</div>
+        <div class="stat-label">Verified Attendance Rate</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Grid -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+    <!-- Chart 1: Participation by Category -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Participation by Category</h3>
+      </div>
+      <div style="position: relative; height: 300px;">
+        <canvas id="chartCategories"></canvas>
+      </div>
+    </div>
+
+    <!-- Chart 2: Registrations vs Actual Attendance -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Registrations vs Verified Attendance</h3>
+      </div>
+      <div style="position: relative; height: 300px;">
+        <canvas id="chartPerformance"></canvas>
+      </div>
+    </div>
+
+    <!-- Chart 3: Top Popular Events -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Most Popular Events</h3>
+      </div>
+      <div style="position: relative; height: 300px;">
+        <canvas id="chartTopEvents"></canvas>
+      </div>
+    </div>
+
+    <!-- Chart 4: Club Membership Distribution -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Society Membership Distribution</h3>
+      </div>
+      <div style="position: relative; height: 300px;">
+        <canvas id="chartClubMembers"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Power BI Integration Architecture Guide -->
+  <div class="card" style="margin-top: 2rem; border-top: 4px solid var(--blue-600);">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h3 style="font-size: 1.35rem; display: flex; align-items: center; gap: 0.5rem;">
+          <i class="fa-solid fa-chart-line" style="color: var(--blue-600);"></i> Power BI Integration & Azure SQL Reporting
+        </h3>
+        <p style="color: var(--slate-600); font-size: 0.95rem; margin-top: 0.25rem;">
+          CampusConnect provides three enterprise pathways for external analytics and accreditation reports:
+        </p>
+      </div>
+
+      <span class="badge badge-blue" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">
+        DirectQuery & CSV Ready
+      </span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
+      <div style="padding: 1.25rem; background: var(--slate-50); border-radius: var(--radius-md); border: 1px solid var(--slate-200);">
+        <strong style="color: var(--indigo-700); font-size: 1rem;">Option A: Direct Azure SQL Connection</strong>
+        <p style="font-size: 0.85rem; color: var(--slate-600); margin-top: 0.5rem; line-height: 1.5;">
+          Connect Power BI Desktop directly to your Azure SQL Database using the SQL Server connector. Utilize the pre-compiled views located in <code>sql/analytics_views.sql</code>:
+        </p>
+        <code style="display: block; background: #fff; padding: 0.5rem; border-radius: var(--radius-sm); font-size: 0.75rem; margin-top: 0.5rem; border: 1px solid var(--slate-200);">
+          Server: tcp:&lt;server&gt;.database.windows.net,1433<br>
+          Database: &lt;database_name&gt;<br>
+          Data Connectivity: DirectQuery
+        </code>
+      </div>
+
+      <div style="padding: 1.25rem; background: var(--slate-50); border-radius: var(--radius-md); border: 1px solid var(--slate-200);">
+        <strong style="color: var(--emerald-700); font-size: 1rem;">Option B: Automated CSV Data Ingestion</strong>
+        <p style="font-size: 0.85rem; color: var(--slate-600); margin-top: 0.5rem; line-height: 1.5;">
+          Export live datasets using the CSV buttons above. Import the files into Power BI Desktop or Excel to generate pivot charts and compliance presentations without exposing credentials.
+        </p>
+        <div style="margin-top: 0.75rem;">
+          <a href="{{ url_for('analytics.export_registrations_csv') }}" class="btn btn-outline btn-sm" style="font-size: 0.75rem;">
+            Download Sample Dataset
+          </a>
+        </div>
+      </div>
+
+      <div style="padding: 1.25rem; background: var(--slate-50); border-radius: var(--radius-md); border: 1px solid var(--slate-200);">
+        <strong style="color: var(--amber-700); font-size: 1rem;">Option C: Power BI Embedded Service</strong>
+        <p style="font-size: 0.85rem; color: var(--slate-600); margin-top: 0.5rem; line-height: 1.5;">
+          If your campus has configured an active Power BI workspace, supply <code>POWER_BI_EMBED_URL</code> in your <code>.env</code> file to embed interactive Power BI tiles directly into this view.
+        </p>
+        {% if power_bi_url %}
+          <div style="margin-top: 0.75rem;">
+            <span class="badge badge-success">Embed URL configured</span>
+          </div>
+        {% else %}
+          <div style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--slate-500);">
+            <em>Embed URL not configured. Local Chart.js engine active.</em>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+{% endblock %}

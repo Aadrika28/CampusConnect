@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard — CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container">
+  
+  <!-- Welcome Header -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h1 style="font-size: 2.2rem; margin-bottom: 0.25rem;">
+        Welcome back, {{ user.name.split()[0] }}! 👋
+      </h1>
+      <p style="color: var(--slate-500); font-size: 1rem;">
+        {{ user.department }} &bull; Class of {{ user.batch_year }} &bull; Student ID: <strong>{{ user.student_id or 'CS2025' }}</strong>
+      </p>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem;">
+      <a href="{{ url_for('events.index') }}" class="btn btn-primary btn-sm">
+        <i class="fa-regular fa-compass"></i> Browse Events
+      </a>
+      <a href="{{ url_for('clubs.index') }}" class="btn btn-secondary btn-sm">
+        <i class="fa-solid fa-users-line"></i> Join Clubs
+      </a>
+    </div>
+  </div>
+
+  <!-- Participation Metrics KPI -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon indigo"><i class="fa-solid fa-ticket"></i></div>
+      <div>
+        <div class="stat-number">{{ total_registered }}</div>
+        <div class="stat-label">Events Registered</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon emerald"><i class="fa-solid fa-clipboard-check"></i></div>
+      <div>
+        <div class="stat-number">{{ total_attended }}</div>
+        <div class="stat-label">Events Attended</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="fa-solid fa-percent"></i></div>
+      <div>
+        <div class="stat-number">{{ attendance_rate }}%</div>
+        <div class="stat-label">Attendance Rate</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon amber"><i class="fa-solid fa-people-group"></i></div>
+      <div>
+        <div class="stat-number">{{ total_clubs }}</div>
+        <div class="stat-label">Clubs Joined</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; margin-top: 1rem;">
+    <!-- Left Column: Upcoming Registered Events & Recommended Activities -->
+    <div>
+      <!-- My Registered Events (Upcoming) -->
+      <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+          <h3 class="card-title"><i class="fa-solid fa-calendar-check" style="color: var(--indigo-600); margin-right: 0.5rem;"></i> My Upcoming Events</h3>
+          <a href="{{ url_for('student.registrations') }}" style="font-size: 0.85rem; font-weight: 600;">View All Passes &rarr;</a>
+        </div>
+
+        {% if upcoming_registered_events %}
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            {% for event in upcoming_registered_events %}
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: var(--radius-md); flex-wrap: wrap; gap: 1rem;">
+                <div>
+                  <div style="font-size: 0.75rem; font-weight: 700; color: var(--indigo-600); text-transform: uppercase;">{{ event.category }} &bull; {{ event.club.name }}</div>
+                  <h4 style="font-size: 1.1rem; margin: 0.2rem 0 0.4rem;">{{ event.title }}</h4>
+                  <div style="font-size: 0.85rem; color: var(--slate-600); display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <span><i class="fa-regular fa-clock" style="color: var(--indigo-600);"></i> {{ event.event_date | format_datetime }}</span>
+                    <span><i class="fa-solid fa-location-dot" style="color: var(--rose-500);"></i> {{ event.venue }}</span>
+                  </div>
+                </div>
+
+                <div>
+                  {% set user_reg = (event.registrations | selectattr('user_id', 'equalto', user.id) | first) %}
+                  {% if user_reg %}
+                    <a href="{{ url_for('events.ticket', registration_id=user_reg.id) }}" class="btn btn-primary btn-sm">
+                      <i class="fa-solid fa-qrcode"></i> Digital QR Pass
+                    </a>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div style="text-align: center; padding: 2rem; color: var(--slate-500);">
+            <i class="fa-regular fa-calendar-xmark" style="font-size: 2.5rem; color: var(--slate-300); margin-bottom: 0.5rem;"></i>
+            <p>You have not registered for any upcoming events.</p>
+            <a href="{{ url_for('events.index') }}" class="btn btn-primary btn-sm" style="margin-top: 0.75rem;">Discover Campus Events</a>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Recommended Events to Explore -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title"><i class="fa-regular fa-compass" style="color: var(--blue-600); margin-right: 0.5rem;"></i> Recommended Events for You</h3>
+          <a href="{{ url_for('events.index') }}" style="font-size: 0.85rem; font-weight: 600;">Browse All &rarr;</a>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          {% for event in explore_events %}
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--slate-100);">
+              <div>
+                <span class="badge badge-indigo" style="font-size: 0.7rem; margin-bottom: 0.25rem;">{{ event.category }}</span>
+                <h4 style="font-size: 1rem; margin: 0.2rem 0;"><a href="{{ url_for('events.detail', event_id=event.id) }}">{{ event.title }}</a></h4>
+                <div style="font-size: 0.8rem; color: var(--slate-500);">
+                  {{ event.event_date | format_datetime }} &bull; {{ event.venue }}
+                </div>
+              </div>
+              <a href="{{ url_for('events.detail', event_id=event.id) }}" class="btn btn-outline btn-sm">
+                Register
+              </a>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Campus Announcements & Joined Clubs -->
+    <div>
+      <!-- Recent Announcements -->
+      <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+          <h3 class="card-title"><i class="fa-solid fa-bullhorn" style="color: var(--amber-500); margin-right: 0.5rem;"></i> Announcements</h3>
+        </div>
+
+        {% if announcements %}
+          <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+            {% for ann in announcements %}
+              <div style="padding: 0.75rem; background: var(--slate-50); border-radius: var(--radius-md); border-left: 3px solid {% if ann.priority == 'urgent' %}var(--rose-500){% elif ann.priority == 'high' %}var(--amber-500){% else %}var(--indigo-600){% endif %};">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                  <strong style="font-size: 0.9rem; color: var(--slate-900);">{{ ann.title }}</strong>
+                  <span class="badge {% if ann.priority == 'urgent' %}badge-danger{% elif ann.priority == 'high' %}badge-warning{% else %}badge-slate{% endif %}" style="font-size: 0.65rem;">
+                    {{ ann.priority }}
+                  </span>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--slate-600); margin-bottom: 0.4rem; line-height: 1.4;">
+                  {{ ann.content }}
+                </p>
+                <div style="font-size: 0.75rem; color: var(--slate-400);">
+                  {{ ann.created_at | format_datetime }} &bull; {% if ann.club %}{{ ann.club.name }}{% else %}Campus Administration{% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p style="color: var(--slate-400); font-size: 0.85rem; text-align: center; padding: 1rem;">No recent notices.</p>
+        {% endif %}
+      </div>
+
+      <!-- Joined Clubs -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title"><i class="fa-solid fa-users" style="color: var(--emerald-500); margin-right: 0.5rem;"></i> Joined Clubs</h3>
+          <a href="{{ url_for('student.clubs') }}" style="font-size: 0.85rem; font-weight: 600;">Manage &rarr;</a>
+        </div>
+
+        {% if joined_clubs %}
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            {% for club in joined_clubs %}
+              <a href="{{ url_for('clubs.detail', club_id=club.id) }}" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem; border-radius: var(--radius-md); transition: var(--transition);" onmouseover="this.style.background='var(--slate-50)'" onmouseout="this.style.background='transparent'">
+                <div style="width: 2.25rem; height: 2.25rem; border-radius: var(--radius-full); background: var(--indigo-50); color: var(--indigo-600); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;">
+                  {{ club.name[:2].upper() }}
+                </div>
+                <div style="flex: 1;">
+                  <div style="font-weight: 600; font-size: 0.9rem; color: var(--slate-800);">{{ club.name }}</div>
+                  <div style="font-size: 0.75rem; color: var(--slate-500);">{{ club.category }} &bull; {{ club.member_count }} members</div>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="color: var(--slate-400); font-size: 0.75rem;"></i>
+              </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div style="text-align: center; padding: 1.5rem; color: var(--slate-500); font-size: 0.85rem;">
+            <p>You haven't joined any clubs yet.</p>
+            <a href="{{ url_for('clubs.index') }}" class="btn btn-secondary btn-sm" style="margin-top: 0.5rem;">Discover Clubs</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

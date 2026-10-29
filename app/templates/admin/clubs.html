@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Clubs & Societies — CampusConnect Administration{% endblock %}
+
+{% block content %}
+<div class="container">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <div>
+      <h1 style="font-size: 2rem;">Campus Societies & Club Charters</h1>
+      <p style="color: var(--slate-500);">Approve new student organizations, assign faculty advisors, and manage leaders</p>
+    </div>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary btn-sm">
+      &larr; Back to Admin Panel
+    </a>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
+    <!-- Create Club Form -->
+    <div class="card" style="height: fit-content;">
+      <h3 style="font-size: 1.25rem; margin-bottom: 1.25rem;">Charter New Club</h3>
+
+      <form method="POST" action="{{ url_for('admin.clubs') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="form-group">
+          <label for="name" class="form-label">Society Name *</label>
+          <input type="text" id="name" name="name" class="form-control" placeholder="e.g. Robotics & AI Club" required>
+        </div>
+
+        <div class="form-group">
+          <label for="category" class="form-label">Category *</label>
+          <select id="category" name="category" class="form-control" required>
+            {% for cat in categories %}
+              <option value="{{ cat }}">{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="faculty_coordinator" class="form-label">Faculty Coordinator *</label>
+          <input type="text" id="faculty_coordinator" name="faculty_coordinator" class="form-control" placeholder="Dr. Alan Turing" required>
+        </div>
+
+        <div class="form-group">
+          <label for="leader_id" class="form-label">Designate Club Leader</label>
+          <select id="leader_id" name="leader_id" class="form-control">
+            <option value="">Unassigned (Assign Later)</option>
+            {% for u in potential_leaders %}
+              <option value="{{ u.id }}">{{ u.name }} ({{ u.email }})</option>
+            {% endfor %}
+          </select>
+          <span style="font-size: 0.75rem; color: var(--slate-400);">Assigning a student will automatically upgrade them to Club Leader.</span>
+        </div>
+
+        <div class="form-group">
+          <label for="description" class="form-label">Mission / Description *</label>
+          <textarea id="description" name="description" class="form-control" rows="3" placeholder="Briefly describe the purpose of the organization..." required></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%;">
+          <i class="fa-solid fa-plus-circle"></i> Establish Club
+        </button>
+      </form>
+    </div>
+
+    <!-- Clubs List Table -->
+    <div class="card" style="padding: 0; overflow: hidden;">
+      <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--slate-200); background: var(--slate-50);">
+        <h3 style="font-size: 1.15rem; margin: 0;">Registered Campus Societies ({{ clubs | length }})</h3>
+      </div>
+
+      <div class="table-responsive" style="border: none;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Club Name</th>
+              <th>Category</th>
+              <th>Coordinator</th>
+              <th>Leader</th>
+              <th>Members</th>
+              <th>Status</th>
+              <th style="text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for club in clubs %}
+              <tr>
+                <td>
+                  <strong style="color: var(--slate-900);"><a href="{{ url_for('clubs.detail', club_id=club.id) }}">{{ club.name }}</a></strong>
+                </td>
+                <td><span class="badge badge-indigo">{{ club.category }}</span></td>
+                <td>{{ club.faculty_coordinator }}</td>
+                <td>{{ club.leader.name if club.leader else '<span style="color:var(--slate-400);">None</span>' | safe }}</td>
+                <td>{{ club.member_count }}</td>
+                <td>
+                  {% if club.is_active %}
+                    <span class="badge badge-success">Active</span>
+                  {% else %}
+                    <span class="badge badge-danger">Inactive</span>
+                  {% endif %}
+                </td>
+                <td style="text-align: right;">
+                  <form method="POST" action="{{ url_for('admin.toggle_club_status', club_id=club.id) }}" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-secondary btn-sm" style="font-size: 0.75rem;">
+                      {{ 'Deactivate' if club.is_active else 'Activate' }}
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

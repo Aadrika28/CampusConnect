@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Club Leader Portal — CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <div style="font-size: 0.85rem; font-weight: 700; color: var(--indigo-600); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem;">
+        Society Leadership Portal
+      </div>
+      <h1 style="font-size: 2.25rem;">Club Organizer Hub</h1>
+      <p style="color: var(--slate-500);">Coordinate activities, track attendees, and manage your student organizations</p>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+      <a href="{{ url_for('club_leader.create_event') }}" class="btn btn-primary btn-sm">
+        <i class="fa-solid fa-plus-circle"></i> Create Event
+      </a>
+      <a href="{{ url_for('club_leader.qr_scanner') }}" class="btn btn-secondary btn-sm">
+        <i class="fa-solid fa-qrcode"></i> Launch QR Scanner
+      </a>
+      <a href="{{ url_for('club_leader.announcements') }}" class="btn btn-secondary btn-sm">
+        <i class="fa-solid fa-bullhorn"></i> Post Notice
+      </a>
+    </div>
+  </div>
+
+  <!-- Club Leader KPIs -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon indigo"><i class="fa-solid fa-users"></i></div>
+      <div>
+        <div class="stat-number">{{ total_members }}</div>
+        <div class="stat-label">Total Society Members</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="fa-regular fa-calendar-check"></i></div>
+      <div>
+        <div class="stat-number">{{ total_events }}</div>
+        <div class="stat-label">Events Organized</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon emerald"><i class="fa-solid fa-ticket"></i></div>
+      <div>
+        <div class="stat-number">{{ total_registrations }}</div>
+        <div class="stat-label">Event Registrations</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon amber"><i class="fa-solid fa-clipboard-user"></i></div>
+      <div>
+        <div class="stat-number">{{ overall_attendance_rate }}%</div>
+        <div class="stat-label">Attendance Rate</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Managed Clubs Overview -->
+  <div class="card" style="margin-bottom: 2rem;">
+    <h3 style="font-size: 1.25rem; margin-bottom: 1rem;">Managed Clubs & Societies</h3>
+    {% if managed_clubs %}
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">
+        {% for club in managed_clubs %}
+          <div style="padding: 1.25rem; background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: var(--radius-md); display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+              <h4 style="font-size: 1.1rem; margin: 0;"><a href="{{ url_for('clubs.detail', club_id=club.id) }}">{{ club.name }}</a></h4>
+              <span class="badge badge-indigo">{{ club.category }}</span>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--slate-600); margin-bottom: 1rem; line-height: 1.4;">
+              {{ club.description[:100] }}...
+            </p>
+            <div style="font-size: 0.8rem; color: var(--slate-500); margin-bottom: 1rem;">
+              <div><strong>Coordinator:</strong> {{ club.faculty_coordinator }}</div>
+              <div><strong>Members:</strong> {{ club.member_count }} Active Students</div>
+            </div>
+            <div style="display: flex; gap: 0.5rem; margin-top: auto;">
+              <a href="{{ url_for('club_leader.edit_club', club_id=club.id) }}" class="btn btn-secondary btn-sm" style="flex: 1;">
+                <i class="fa-solid fa-pen-to-square"></i> Edit Details
+              </a>
+              <a href="{{ url_for('clubs.detail', club_id=club.id) }}" class="btn btn-outline btn-sm">
+                View Public
+              </a>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p style="color: var(--slate-500);">You are not designated as the leader of any clubs yet.</p>
+    {% endif %}
+  </div>
+
+  <!-- Active & Upcoming Events Moderation Table -->
+  <div class="card" style="padding: 0; overflow: hidden;">
+    <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="font-size: 1.25rem; margin: 0;">Active Events & Attendee Management</h3>
+      <a href="{{ url_for('club_leader.create_event') }}" class="btn btn-primary btn-sm">
+        <i class="fa-solid fa-plus"></i> New Event
+      </a>
+    </div>
+
+    {% if upcoming_events %}
+      <div class="table-responsive" style="border: none;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Event Title</th>
+              <th>Date & Time</th>
+              <th>Venue</th>
+              <th>Registrations</th>
+              <th>Attended</th>
+              <th>Status</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for event in upcoming_events %}
+              <tr>
+                <td>
+                  <strong style="color: var(--slate-900); font-size: 0.95rem;">{{ event.title }}</strong>
+                  <div style="font-size: 0.8rem; color: var(--slate-500);">{{ event.club.name }} &bull; {{ event.category }}</div>
+                </td>
+                <td>{{ event.event_date | format_datetime }}</td>
+                <td>{{ event.venue }}</td>
+                <td>
+                  <span class="badge badge-indigo">{{ event.confirmed_registrations_count }} / {{ event.max_capacity }}</span>
+                </td>
+                <td>
+                  <span class="badge badge-success">{{ event.attended_count }}</span>
+                </td>
+                <td>
+                  <span class="badge {% if event.status == 'published' %}badge-success{% else %}badge-warning{% endif %}">
+                    {{ event.status }}
+                  </span>
+                </td>
+                <td style="text-align: right;">
+                  <div style="display: inline-flex; gap: 0.4rem;">
+                    <a href="{{ url_for('club_leader.participants', event_id=event.id) }}" class="btn btn-secondary btn-sm" title="View Registered Attendees">
+                      <i class="fa-solid fa-users"></i> Attendees
+                    </a>
+                    <a href="{{ url_for('club_leader.qr_scanner', event_id=event.id) }}" class="btn btn-primary btn-sm" title="Launch Scanner for this event">
+                      <i class="fa-solid fa-qrcode"></i> Scan
+                    </a>
+                    <a href="{{ url_for('club_leader.edit_event', event_id=event.id) }}" class="btn btn-secondary btn-sm" title="Edit Event Details">
+                      <i class="fa-solid fa-pen"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 3rem; color: var(--slate-500);">
+        <p>No active events created yet. Launch your first campus event today!</p>
+        <a href="{{ url_for('club_leader.create_event') }}" class="btn btn-primary btn-sm" style="margin-top: 0.5rem;">Create Event</a>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

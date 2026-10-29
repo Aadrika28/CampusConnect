@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Club Announcements — CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px;">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <div>
+      <h1 style="font-size: 2rem;">Club Announcements & Broadcasts</h1>
+      <p style="color: var(--slate-500);">Send updates, meeting notifications, and schedule revisions to club members</p>
+    </div>
+    <a href="{{ url_for('club_leader.dashboard') }}" class="btn btn-secondary btn-sm">
+      &larr; Back to Dashboard
+    </a>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+    <!-- Post Announcement Form -->
+    <div class="card">
+      <h3 style="font-size: 1.25rem; margin-bottom: 1.25rem;">Publish Notice</h3>
+      
+      <form method="POST" action="{{ url_for('club_leader.announcements') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="form-group">
+          <label for="club_id" class="form-label">Target Club</label>
+          <select id="club_id" name="club_id" class="form-control" required>
+            {% for c in managed_clubs %}
+              <option value="{{ c.id }}">{{ c.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="title" class="form-label">Notice Headline *</label>
+          <input type="text" id="title" name="title" class="form-control" placeholder="e.g. General Body Meeting this Friday" required>
+        </div>
+
+        <div class="form-group">
+          <label for="priority" class="form-label">Priority</label>
+          <select id="priority" name="priority" class="form-control">
+            <option value="normal">Normal</option>
+            <option value="high">High Priority</option>
+            <option value="urgent">Urgent Announcement</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="content" class="form-label">Notice Message *</label>
+          <textarea id="content" name="content" class="form-control" rows="4" placeholder="Detail the agenda, location, or requirements..." required></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%;">
+          <i class="fa-solid fa-bullhorn"></i> Broadcast Announcement
+        </button>
+      </form>
+    </div>
+
+    <!-- Past Club Announcements List -->
+    <div>
+      <div class="card">
+        <h3 style="font-size: 1.25rem; margin-bottom: 1rem;">Past Notices</h3>
+
+        {% if announcements %}
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            {% for ann in announcements %}
+              <div style="padding: 1rem; background: var(--slate-50); border-radius: var(--radius-md); border-left: 3px solid {% if ann.priority == 'urgent' %}var(--rose-500){% elif ann.priority == 'high' %}var(--amber-500){% else %}var(--indigo-600){% endif %};">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.25rem;">
+                  <strong style="color: var(--slate-900);">{{ ann.title }}</strong>
+                  <span class="badge {% if ann.priority == 'urgent' %}badge-danger{% elif ann.priority == 'high' %}badge-warning{% else %}badge-slate{% endif %}" style="font-size: 0.65rem;">
+                    {{ ann.priority }}
+                  </span>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--slate-600); margin-bottom: 0.5rem; line-height: 1.4;">{{ ann.content }}</p>
+                <div style="font-size: 0.75rem; color: var(--slate-400);">
+                  {{ ann.created_at | format_datetime }} &bull; {{ ann.club.name if ann.club else 'General' }}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p style="color: var(--slate-400); text-align: center; padding: 2rem;">No notices published yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

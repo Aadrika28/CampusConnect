@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Digital Pass: {{ event.title }} — CampusConnect{% endblock %}
+
+{% block extra_head %}
+<style>
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+    .ticket-wrapper, .ticket-wrapper * {
+      visibility: visible;
+    }
+    .ticket-wrapper {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      box-shadow: none;
+      border: 1px solid #000;
+    }
+    .no-print {
+      display: none !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 680px;">
+  
+  <div class="no-print" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <a href="{{ url_for('student.registrations') }}" style="font-weight: 600; color: var(--slate-600);">
+      &larr; Back to My Registrations
+    </a>
+
+    <button onclick="window.print()" class="btn btn-secondary btn-sm">
+      <i class="fa-solid fa-print"></i> Print / Save Pass
+    </button>
+  </div>
+
+  <!-- Digital Ticket Card -->
+  <div class="ticket-wrapper">
+    <div class="ticket-punchhole-left"></div>
+    <div class="ticket-punchhole-right"></div>
+
+    <div class="ticket-header">
+      <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: #a5b4fc; font-weight: 700;">
+        <i class="fa-solid fa-graduation-cap"></i> Official CampusConnect Event Pass
+      </div>
+      <h2>{{ event.title }}</h2>
+      <div style="margin-top: 0.5rem;">
+        <span class="badge" style="background: rgba(255,255,255,0.2); color: #fff;">
+          {{ event.category }} &bull; {{ event.club.name }}
+        </span>
+      </div>
+    </div>
+
+    <div class="ticket-body">
+      <!-- QR Pass Visual -->
+      <div class="ticket-qr-container">
+        <img src="{{ qr_b64 }}" alt="QR Attendance Token" class="ticket-qr-img">
+        <div style="font-size: 0.75rem; color: var(--slate-500); margin-top: 0.5rem; font-weight: 600; letter-spacing: 0.05em;">
+          PASS CODE: {{ registration.registration_code }}
+        </div>
+      </div>
+
+      <!-- Live Attendance Verification Badge -->
+      <div style="margin-bottom: 1.5rem;">
+        {% if attendance %}
+          <div class="alert alert-success" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem;">
+            <i class="fa-solid fa-circle-check"></i>
+            <span><strong>Attendance Verified:</strong> {{ attendance.marked_at | format_datetime }}</span>
+          </div>
+        {% else %}
+          <div class="alert alert-info" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem;">
+            <i class="fa-solid fa-qrcode"></i>
+            <span>Present this QR pass to the organizer at venue entrance</span>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Attendee & Event Metadata -->
+      <div class="ticket-info-grid">
+        <div>
+          <div class="ticket-info-label">Attendee Name</div>
+          <div class="ticket-info-val">{{ student.name }}</div>
+        </div>
+        <div>
+          <div class="ticket-info-label">Student ID</div>
+          <div class="ticket-info-val">{{ student.student_id or 'N/A' }}</div>
+        </div>
+        <div>
+          <div class="ticket-info-label">Department</div>
+          <div class="ticket-info-val">{{ student.department }}</div>
+        </div>
+        <div>
+          <div class="ticket-info-label">Registered At</div>
+          <div class="ticket-info-val">{{ registration.registered_at | format_datetime }}</div>
+        </div>
+        <div>
+          <div class="ticket-info-label">Date & Time</div>
+          <div class="ticket-info-val">{{ event.event_date | format_datetime }}</div>
+        </div>
+        <div>
+          <div class="ticket-info-label">Venue Location</div>
+          <div class="ticket-info-val">{{ event.venue }}</div>
+        </div>
+      </div>
+
+      <div style="font-size: 0.75rem; color: var(--slate-400); text-align: center; border-top: 1px solid var(--slate-100); padding-top: 1rem;">
+        Cryptographically signed HMAC-SHA256 Token &bull; Single-scan verification enforced &bull; Non-transferable
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

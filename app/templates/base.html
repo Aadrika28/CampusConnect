@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}CampusConnect — College Event & Club Management Platform{% endblock %}</title>
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <nav class="navbar">
+    <div class="container navbar-inner">
+      <a href="{{ url_for('main.index') }}" class="brand-logo">
+        <div class="brand-icon">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <div class="brand-text">Campus<span>Connect</span></div>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="{{ url_for('events.index') }}" class="nav-link {% if request.path.startswith('/events') %}active{% endif %}"><i class="fa-regular fa-calendar-days"></i> Events</a></li>
+        <li><a href="{{ url_for('clubs.index') }}" class="nav-link {% if request.path.startswith('/clubs') %}active{% endif %}"><i class="fa-solid fa-users-line"></i> Clubs</a></li>
+        <li><a href="{{ url_for('analytics.index') }}" class="nav-link {% if request.path.startswith('/analytics') %}active{% endif %}"><i class="fa-solid fa-chart-pie"></i> Analytics</a></li>
+        <li><a href="{{ url_for('main.about') }}" class="nav-link {% if request.path == '/about' %}active{% endif %}"><i class="fa-solid fa-circle-info"></i> About</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        {% if current_user %}
+          <!-- Notification Bell -->
+          <div class="user-menu-wrapper">
+            <button class="notif-bell" id="notifBellBtn" title="Notifications" aria-label="Notifications">
+              <i class="fa-regular fa-bell"></i>
+              {% if unread_notifications_count > 0 %}
+                <span class="notif-badge">{{ unread_notifications_count }}</span>
+              {% endif %}
+            </button>
+            <div class="dropdown-panel" id="notifDropdown" style="width: 300px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0.75rem; border-bottom:1px solid var(--slate-100);">
+                <strong style="font-size:0.9rem;">Notifications</strong>
+                <a href="{{ url_for('student.notifications') }}" style="font-size:0.8rem;">View All</a>
+              </div>
+              <div style="max-height: 250px; overflow-y: auto;">
+                {% if current_user.notifications %}
+                  {% for notif in current_user.notifications[:4] %}
+                    <a href="{{ notif.link or url_for('student.notifications') }}" class="dropdown-item" style="display:block; padding:0.6rem 0.75rem; border-bottom:1px solid var(--slate-50); font-size:0.85rem;">
+                      <div style="font-weight:600; color:var(--slate-900);">{{ notif.title }}</div>
+                      <div style="color:var(--slate-500); font-size:0.75rem; margin-top:0.2rem;">{{ notif.created_at | format_datetime }}</div>
+                    </a>
+                  {% endfor %}
+                {% else %}
+                  <div style="padding:1rem; text-align:center; color:var(--slate-400); font-size:0.85rem;">No new notifications.</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- User Menu Dropdown -->
+          <div class="user-menu-wrapper">
+            <button class="user-button" id="userMenuBtn" aria-expanded="false">
+              <div class="avatar-badge">{{ current_user.name[:1] }}</div>
+              <span>{{ current_user.name.split()[0] }}</span>
+              <span class="badge {% if current_user.is_admin %}badge-danger{% elif current_user.is_club_leader %}badge-indigo{% else %}badge-slate{% endif %}" style="font-size:0.65rem;">
+                {{ current_user.role.replace('_', ' ') | title }}
+              </span>
+              <i class="fa-solid fa-chevron-down" style="font-size:0.75rem; color:var(--slate-400);"></i>
+            </button>
+
+            <div class="dropdown-panel" id="userDropdown">
+              <div style="padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--slate-100);">
+                <div style="font-weight: 700; color: var(--slate-900);">{{ current_user.name }}</div>
+                <div style="font-size: 0.8rem; color: var(--slate-500);">{{ current_user.email }}</div>
+              </div>
+
+              <!-- Role-specific Navigation -->
+              {% if current_user.is_admin %}
+                <a href="{{ url_for('admin.dashboard') }}" class="dropdown-item"><i class="fa-solid fa-shield-halved"></i> Admin Control Panel</a>
+                <a href="{{ url_for('admin.users') }}" class="dropdown-item"><i class="fa-solid fa-users-gear"></i> User Management</a>
+                <a href="{{ url_for('admin.clubs') }}" class="dropdown-item"><i class="fa-solid fa-building-columns"></i> Campus Clubs</a>
+                <a href="{{ url_for('admin.audit_logs') }}" class="dropdown-item"><i class="fa-solid fa-fingerprint"></i> Security Audit Logs</a>
+                <div class="dropdown-divider"></div>
+              {% endif %}
+
+              {% if current_user.is_club_leader or current_user.is_admin %}
+                <a href="{{ url_for('club_leader.dashboard') }}" class="dropdown-item"><i class="fa-solid fa-award"></i> Club Leader Portal</a>
+                <a href="{{ url_for('club_leader.qr_scanner') }}" class="dropdown-item"><i class="fa-solid fa-qrcode"></i> QR Attendance Scanner</a>
+                <a href="{{ url_for('club_leader.create_event') }}" class="dropdown-item"><i class="fa-solid fa-plus-circle"></i> Create New Event</a>
+                <div class="dropdown-divider"></div>
+              {% endif %}
+
+              <a href="{{ url_for('student.dashboard') }}" class="dropdown-item"><i class="fa-solid fa-gauge-high"></i> Student Dashboard</a>
+              <a href="{{ url_for('student.registrations') }}" class="dropdown-item"><i class="fa-solid fa-ticket"></i> My Event Tickets</a>
+              <a href="{{ url_for('student.clubs') }}" class="dropdown-item"><i class="fa-solid fa-people-group"></i> My Joined Clubs</a>
+              <a href="{{ url_for('auth.profile') }}" class="dropdown-item"><i class="fa-solid fa-user-gear"></i> Profile & Password</a>
+              
+              <div class="dropdown-divider"></div>
+              <a href="{{ url_for('auth.logout') }}" class="dropdown-item" style="color:var(--rose-600);"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out</a>
+            </div>
+          </div>
+        {% else %}
+          <a href="{{ url_for('auth.login') }}" class="btn btn-secondary btn-sm">Sign In</a>
+          <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">Get Started</a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+
+  <!-- Flash Alerts Container -->
+  <div class="container flash-container" style="padding-top: 1.5rem;">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">
+            <span>{{ message }}</span>
+            <button type="button" class="alert-close" aria-label="Close">&times;</button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- Main View Area -->
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <div class="brand-logo" style="margin-bottom: 0.75rem;">
+            <div class="brand-icon" style="width:2rem; height:2rem; font-size:0.9rem;">
+              <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <div class="brand-text">Campus<span>Connect</span></div>
+          </div>
+          <p style="font-size:0.9rem; color:var(--slate-500); max-width: 320px;">
+            The unified platform for college event discovery, club coordination, digital QR check-in, and student participation analytics.
+          </p>
+          <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+            <span class="badge badge-indigo"><i class="fa-brands fa-microsoft"></i> Azure SQL & Blob Ready</span>
+            <span class="badge badge-blue"><i class="fa-solid fa-chart-line"></i> Power BI Ready</span>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h5>Platform</h5>
+          <ul>
+            <li><a href="{{ url_for('events.index') }}">Explore Events</a></li>
+            <li><a href="{{ url_for('clubs.index') }}">Campus Clubs</a></li>
+            <li><a href="{{ url_for('analytics.index') }}">Participation Analytics</a></li>
+            <li><a href="{{ url_for('main.about') }}">Architecture & Tech</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Portals</h5>
+          <ul>
+            <li><a href="{{ url_for('student.dashboard') }}">Student Dashboard</a></li>
+            <li><a href="{{ url_for('club_leader.dashboard') }}">Club Leader Hub</a></li>
+            <li><a href="{{ url_for('club_leader.qr_scanner') }}">QR Attendance Scanner</a></li>
+            <li><a href="{{ url_for('admin.dashboard') }}">Administration</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Demo Credentials</h5>
+          <ul style="font-size:0.85rem; color:var(--slate-600);">
+            <li><strong>Admin:</strong> admin@campus.edu</li>
+            <li><strong>Leader:</strong> leader@campus.edu</li>
+            <li><strong>Student:</strong> student@campus.edu</li>
+            <li style="margin-top:0.4rem; color:var(--indigo-600);"><em>Password: Campus@2025</em></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>&copy; 2025 CampusConnect. Designed with enterprise Python Flask, SQLAlchemy, and Azure Cloud Architecture.</div>
+        <div>Local SQLite Fallback &bull; Azure SQL Compatible</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Core Scripts -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

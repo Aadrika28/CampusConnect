@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In — CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 480px; padding-top: 1.5rem;">
+  <div class="card" style="box-shadow: var(--shadow-lg); border-radius: var(--radius-xl); padding: 2.5rem 2rem;">
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <div class="brand-icon" style="margin: 0 auto 1rem; width: 3rem; height: 3rem; font-size: 1.25rem;">
+        <i class="fa-solid fa-graduation-cap"></i>
+      </div>
+      <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem;">Welcome to CampusConnect</h2>
+      <p style="color: var(--slate-500); font-size: 0.95rem;">Sign in to your student, leader, or admin account</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="form-group">
+        <label for="email" class="form-label">Email Address</label>
+        <div style="position: relative;">
+          <input type="email" id="email" name="email" class="form-control" placeholder="name@campus.edu" value="{{ email or '' }}" required autofocus>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">Password</label>
+        <div style="position: relative;">
+          <input type="password" id="password" name="password" class="form-control" placeholder="Enter your password" required>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; font-size: 0.85rem;">
+        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--slate-600);">
+          <input type="checkbox" name="remember" value="1"> Remember this device
+        </label>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem;">
+        <i class="fa-solid fa-right-to-bracket"></i> Sign In
+      </button>
+    </form>
+
+    <!-- Quick Demo Fill Section -->
+    <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--slate-200);">
+      <div style="font-size: 0.75rem; font-weight: 700; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; text-align: center; margin-bottom: 0.75rem;">
+        ⚡ Instant Demo Access
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="fillDemo('student@campus.edu', 'Campus@2025')">
+          Student
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="fillDemo('leader@campus.edu', 'Campus@2025')">
+          Leader
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="fillDemo('admin@campus.edu', 'Campus@2025')">
+          Admin
+        </button>
+      </div>
+    </div>
+
+    <div style="margin-top: 1.75rem; text-align: center; font-size: 0.9rem; color: var(--slate-600);">
+      Don't have a student account? <a href="{{ url_for('auth.register') }}" style="font-weight: 600;">Register here</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  function fillDemo(email, password) {
+    document.getElementById('email').value = email;
+    document.getElementById('password').value = password;
+  }
+</script>
+{% endblock %}

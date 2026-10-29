@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Student Registration — CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 600px; padding-top: 1rem;">
+  <div class="card" style="box-shadow: var(--shadow-lg); border-radius: var(--radius-xl); padding: 2.5rem 2rem;">
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <div class="brand-icon" style="margin: 0 auto 1rem; width: 3rem; height: 3rem; font-size: 1.25rem;">
+        <i class="fa-solid fa-user-plus"></i>
+      </div>
+      <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem;">Create Student Account</h2>
+      <p style="color: var(--slate-500); font-size: 0.95rem;">Join CampusConnect to register for events and student societies</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('auth.register') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="name" class="form-label">Full Name *</label>
+          <input type="text" id="name" name="name" class="form-control" placeholder="Jane Doe" value="{{ form_data.get('name') if form_data else '' }}" required>
+        </div>
+
+        <div class="form-group">
+          <label for="student_id" class="form-label">Student ID / Roll No *</label>
+          <input type="text" id="student_id" name="student_id" class="form-control" placeholder="CS2025042" value="{{ form_data.get('student_id') if form_data else '' }}" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email" class="form-label">College Email *</label>
+        <input type="email" id="email" name="email" class="form-control" placeholder="student@campus.edu" value="{{ form_data.get('email') if form_data else '' }}" required>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="department" class="form-label">Department / Major</label>
+          <select id="department" name="department" class="form-control">
+            <option value="Computer Science & Engineering">Computer Science & Engineering</option>
+            <option value="Information Technology">Information Technology</option>
+            <option value="Electronics & Communication">Electronics & Communication</option>
+            <option value="Mechanical Engineering">Mechanical Engineering</option>
+            <option value="Business Administration">Business Administration</option>
+            <option value="Design & Media">Design & Media</option>
+            <option value="Biotechnology">Biotechnology</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="batch_year" class="form-label">Graduation Year</label>
+          <input type="number" id="batch_year" name="batch_year" class="form-control" value="2026" min="2023" max="2030">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="phone" class="form-label">Phone Number (Optional)</label>
+        <input type="tel" id="phone" name="phone" class="form-control" placeholder="+1 (555) 000-0000" value="{{ form_data.get('phone') if form_data else '' }}">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="password" class="form-label">Password * (min 6 chars)</label>
+          <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+        </div>
+
+        <div class="form-group">
+          <label for="confirm_password" class="form-label">Confirm Password *</label>
+          <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="••••••••" required>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 1rem;">
+        <i class="fa-solid fa-user-check"></i> Complete Student Registration
+      </button>
+    </form>
+
+    <div style="margin-top: 1.75rem; text-align: center; font-size: 0.9rem; color: var(--slate-600);">
+      Already have an account? <a href="{{ url_for('auth.login') }}" style="font-weight: 600;">Sign in here</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

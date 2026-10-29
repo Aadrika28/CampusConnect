@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}My Event Registrations — CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h1 style="font-size: 2rem;">My Event Registrations</h1>
+      <p style="color: var(--slate-500);">View your event passes, check attendance records, and manage bookings</p>
+    </div>
+    <a href="{{ url_for('events.index') }}" class="btn btn-primary btn-sm">
+      <i class="fa-solid fa-plus"></i> Find More Events
+    </a>
+  </div>
+
+  {% if registrations %}
+    <div class="card" style="padding: 0; overflow: hidden;">
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Event</th>
+              <th>Date & Time</th>
+              <th>Venue</th>
+              <th>Pass Code</th>
+              <th>Status</th>
+              <th>Attendance</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for reg in registrations %}
+              <tr>
+                <td>
+                  <strong style="color: var(--slate-900);">{{ reg.event.title }}</strong>
+                  <div style="font-size: 0.8rem; color: var(--slate-500);">{{ reg.event.club.name }} &bull; {{ reg.event.category }}</div>
+                </td>
+                <td>{{ reg.event.event_date | format_datetime }}</td>
+                <td>{{ reg.event.venue }}</td>
+                <td><code style="background: var(--slate-100); padding: 0.2rem 0.4rem; border-radius: var(--radius-sm); font-weight: 700;">{{ reg.registration_code }}</code></td>
+                <td>
+                  <span class="badge {% if reg.status == 'confirmed' %}badge-success{% else %}badge-danger{% endif %}">
+                    {{ reg.status }}
+                  </span>
+                </td>
+                <td>
+                  {% if reg.attendance %}
+                    <span class="badge badge-success" title="Verified at {{ reg.attendance.marked_at | format_datetime }}">
+                      <i class="fa-solid fa-check"></i> Attended
+                    </span>
+                  {% elif reg.event.event_date < now %}
+                    <span class="badge badge-slate">Missed</span>
+                  {% else %}
+                    <span class="badge badge-warning">Pending Check-in</span>
+                  {% endif %}
+                </td>
+                <td style="text-align: right;">
+                  <div style="display: inline-flex; gap: 0.5rem;">
+                    {% if reg.status == 'confirmed' %}
+                      <a href="{{ url_for('events.ticket', registration_id=reg.id) }}" class="btn btn-primary btn-sm" title="Open QR Pass">
+                        <i class="fa-solid fa-qrcode"></i> View Pass
+                      </a>
+
+                      {% if not reg.attendance and reg.event.event_date > now %}
+                        <form method="POST" action="{{ url_for('events.cancel_registration', event_id=reg.event.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to cancel your registration? This will release your seat to other students.');">
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                          <button type="submit" class="btn btn-secondary btn-sm" style="color: var(--rose-600);" title="Cancel Booking">
+                            Cancel
+                          </button>
+                        </form>
+                      {% endif %}
+                    {% else %}
+                      <span style="font-size: 0.85rem; color: var(--slate-400);">Cancelled</span>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% else %}
+    <div class="card" style="text-align: center; padding: 3.5rem;">
+      <i class="fa-solid fa-ticket-simple" style="font-size: 3.5rem; color: var(--slate-300); margin-bottom: 1rem;"></i>
+      <h3 style="margin-bottom: 0.5rem;">No Event Registrations Found</h3>
+      <p style="color: var(--slate-500); max-width: 450px; margin: 0 auto 1.5rem;">
+        You haven't signed up for any campus activities or competitions yet. Explore our vibrant calendar!
+      </p>
+      <a href="{{ url_for('events.index') }}" class="btn btn-primary">
+        Browse Events Catalog
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

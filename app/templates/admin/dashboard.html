@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Administrator Control Center — CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <div style="font-size: 0.85rem; font-weight: 700; color: var(--rose-600); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem;">
+        Campus Administration & Governance
+      </div>
+      <h1 style="font-size: 2.25rem;">Administrator Control Panel</h1>
+      <p style="color: var(--slate-500);">System-wide user control, club charters, event moderation, and security auditing</p>
+    </div>
+
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+      <a href="{{ url_for('admin.users') }}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-users-gear"></i> Users</a>
+      <a href="{{ url_for('admin.clubs') }}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-building-columns"></i> Clubs</a>
+      <a href="{{ url_for('admin.events') }}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-calendar-check"></i> Events</a>
+      <a href="{{ url_for('admin.announcements') }}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-bullhorn"></i> Broadcast</a>
+      <a href="{{ url_for('admin.audit_logs') }}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-fingerprint"></i> Audit Trail</a>
+    </div>
+  </div>
+
+  <!-- Platform KPI Grid -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon indigo"><i class="fa-solid fa-users"></i></div>
+      <div>
+        <div class="stat-number">{{ total_users }}</div>
+        <div class="stat-label">Total Accounts ({{ total_students }} Students)</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="fa-solid fa-people-roof"></i></div>
+      <div>
+        <div class="stat-number">{{ total_clubs }}</div>
+        <div class="stat-label">Clubs ({{ active_clubs }} Active)</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon emerald"><i class="fa-regular fa-calendar-days"></i></div>
+      <div>
+        <div class="stat-number">{{ total_events }}</div>
+        <div class="stat-label">Total Events ({{ upcoming_events }} Upcoming)</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon amber"><i class="fa-solid fa-ticket"></i></div>
+      <div>
+        <div class="stat-number">{{ total_registrations }}</div>
+        <div class="stat-label">Registrations ({{ attendance_rate }}% Attended)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Platform Activity & Audit Logs -->
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+    <!-- Left: Security Audit Trail -->
+    <div class="card" style="padding: 0; overflow: hidden;">
+      <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="font-size: 1.2rem; margin: 0;">Recent Security & Platform Audit Logs</h3>
+        <a href="{{ url_for('admin.audit_logs') }}" style="font-size: 0.85rem; font-weight: 600;">View Full Log &rarr;</a>
+      </div>
+
+      <div class="table-responsive" style="border: none;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Action</th>
+              <th>Entity</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in recent_logs %}
+              <tr>
+                <td style="font-size: 0.8rem; color: var(--slate-500); white-space: nowrap;">{{ log.timestamp | format_datetime }}</td>
+                <td><span class="badge badge-slate">{{ log.action }}</span></td>
+                <td><strong>{{ log.entity_type }}</strong></td>
+                <td style="font-size: 0.85rem; color: var(--slate-600);">{{ log.details }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Right: Recent Registrations Stream -->
+    <div class="card">
+      <h3 style="font-size: 1.2rem; margin-bottom: 1rem;">Recent Registrations</h3>
+      <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+        {% for reg in recent_registrations %}
+          <div style="padding: 0.75rem; background: var(--slate-50); border-radius: var(--radius-md); font-size: 0.85rem;">
+            <div style="font-weight: 700; color: var(--slate-900);">{{ reg.user.name }}</div>
+            <div style="color: var(--slate-600);">Registered for: <em>{{ reg.event.title }}</em></div>
+            <div style="font-size: 0.75rem; color: var(--slate-400); margin-top: 0.25rem;">
+              {{ reg.registered_at | format_datetime }} &bull; <code>{{ reg.registration_code }}</code>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

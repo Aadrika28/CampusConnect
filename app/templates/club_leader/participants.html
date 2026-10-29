@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Attendees: {{ event.title }} — CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container">
+  
+  <div style="margin-bottom: 1.5rem;">
+    <a href="{{ url_for('club_leader.dashboard') }}" style="font-weight: 600; color: var(--slate-600);">
+      &larr; Back to Leader Hub
+    </a>
+  </div>
+
+  <!-- Event Header & Stats Banner -->
+  <div class="card" style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <div style="font-size: 0.8rem; font-weight: 700; color: var(--indigo-600); text-transform: uppercase;">Participant Management</div>
+        <h1 style="font-size: 2rem; margin: 0.2rem 0 0.5rem;">{{ event.title }}</h1>
+        <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.9rem; color: var(--slate-600);">
+          <span><i class="fa-regular fa-clock" style="color: var(--indigo-600);"></i> {{ event.event_date | format_datetime }}</span>
+          <span><i class="fa-solid fa-location-dot" style="color: var(--rose-500);"></i> {{ event.venue }}</span>
+          <span><i class="fa-solid fa-users" style="color: var(--emerald-600);"></i> <strong>{{ event.confirmed_registrations_count }}</strong> / {{ event.max_capacity }} Registered</span>
+          <span><i class="fa-solid fa-clipboard-check" style="color: var(--blue-600);"></i> <strong>{{ event.attended_count }}</strong> Verified Attended</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        <a href="{{ url_for('club_leader.qr_scanner', event_id=event.id) }}" class="btn btn-primary btn-sm">
+          <i class="fa-solid fa-qrcode"></i> Launch QR Scanner
+        </a>
+        <a href="{{ url_for('club_leader.export_participants_csv', event_id=event.id) }}" class="btn btn-secondary btn-sm">
+          <i class="fa-solid fa-file-csv"></i> Export to CSV
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search & Filter Controls -->
+  <div class="card" style="margin-bottom: 1.5rem; padding: 1rem 1.25rem;">
+    <form method="GET" action="{{ url_for('club_leader.participants', event_id=event.id) }}" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+      <div style="flex: 2; min-width: 250px;">
+        <input type="text" name="q" class="form-control" placeholder="Search attendee name, student ID, pass code, or email..." value="{{ search_query }}">
+      </div>
+      <div style="flex: 1; min-width: 150px;">
+        <select name="status" class="form-control">
+          <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Registrations</option>
+          <option value="confirmed" {% if status_filter == 'confirmed' %}selected{% endif %}>Confirmed Only</option>
+          <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+        </select>
+      </div>
+      <div>
+        <button type="submit" class="btn btn-primary" style="padding: 0.7rem 1.25rem;">Filter</button>
+        {% if search_query or status_filter != 'all' %}
+          <a href="{{ url_for('club_leader.participants', event_id=event.id) }}" class="btn btn-secondary" style="padding: 0.7rem;">Clear</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Attendees Table -->
+  <div class="card" style="padding: 0; overflow: hidden;">
+    {% if participants %}
+      <div class="table-responsive" style="border: none;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Pass Code</th>
+              <th>Student Name & ID</th>
+              <th>Department</th>
+              <th>Registered At</th>
+              <th>Status</th>
+              <th>Attendance Verification</th>
+              <th style="text-align: right;">Manual Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for reg in participants %}
+              <tr id="row-{{ reg.id }}">
+                <td><code style="background: var(--slate-100); padding: 0.2rem 0.4rem; border-radius: var(--radius-sm); font-weight: 700;">{{ reg.registration_code }}</code></td>
+                <td>
+                  <strong style="color: var(--slate-900);">{{ reg.user.name }}</strong>
+                  <div style="font-size: 0.8rem; color: var(--slate-500);">{{ reg.user.student_id or 'No ID' }} &bull; {{ reg.user.email }}</div>
+                </td>
+                <td>{{ reg.user.department }}</td>
+                <td>{{ reg.registered_at | format_datetime }}</td>
+                <td>
+                  <span class="badge {% if reg.status == 'confirmed' %}badge-success{% else %}badge-danger{% endif %}">
+                    {{ reg.status }}
+                  </span>
+                </td>
+                <td id="attendance-cell-{{ reg.id }}">
+                  {% if reg.id in attended_reg_ids %}
+                    <span class="badge badge-success">
+                      <i class="fa-solid fa-circle-check"></i> Attended
+                    </span>
+                  {% else %}
+                    <span class="badge badge-slate">Not Attended</span>
+                  {% endif %}
+                </td>
+                <td style="text-align: right;">
+                  {% if reg.status == 'confirmed' %}
+                    <button class="btn btn-secondary btn-sm" onclick="toggleAttendance({{ reg.id }})" id="btn-toggle-{{ reg.id }}" style="font-size: 0.8rem;">
+                      {% if reg.id in attended_reg_ids %}
+                        <i class="fa-solid fa-xmark" style="color: var(--rose-600);"></i> Revoke
+                      {% else %}
+                        <i class="fa-solid fa-check" style="color: var(--emerald-600);"></i> Check In
+                      {% endif %}
+                    </button>
+                  {% else %}
+                    <span style="font-size: 0.8rem; color: var(--slate-400);">N/A</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 3rem; color: var(--slate-500);">
+        <i class="fa-solid fa-user-xmark" style="font-size: 3rem; color: var(--slate-300); margin-bottom: 1rem;"></i>
+        <p>No attendees found matching current criteria.</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+  function toggleAttendance(registrationId) {
+    const btn = document.getElementById(`btn-toggle-${registrationId}`);
+    const cell = document.getElementById(`attendance-cell-${registrationId}`);
+    if (btn) btn.disabled = true;
+
+    fetch('/api/attendance/toggle-manual', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCsrfToken()
+      },
+      body: JSON.stringify({ registration_id: registrationId })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        if (data.attended) {
+          cell.innerHTML = '<span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> Attended</span>';
+          btn.innerHTML = '<i class="fa-solid fa-xmark" style="color: var(--rose-600);"></i> Revoke';
+        } else {
+          cell.innerHTML = '<span class="badge badge-slate">Not Attended</span>';
+          btn.innerHTML = '<i class="fa-solid fa-check" style="color: var(--emerald-600);"></i> Check In';
+        }
+      } else {
+        alert(data.message || 'Operation failed');
+      }
+    })
+    .catch(err => alert('Network error occurred'))
+    .finally(() => {
+      if (btn) btn.disabled = false;
+    });
+  }
+</script>
+{% endblock %}
