@@ -18,7 +18,8 @@ class Config:
         SQLALCHEMY_DATABASE_URI = azure_db_uri
     else:
         # Local SQLite database in instance folder
-        os.makedirs(os.path.join(basedir, 'instance'), exist_ok=True)
+        instance_path = os.path.join(os.environ.get('VERCEL_TMP_DIR','/tmp'),'instance')
+        os.makedirs(instance_path,exist_ok=True)
         SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(basedir, 'instance', 'campusconnect.db')}"
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
